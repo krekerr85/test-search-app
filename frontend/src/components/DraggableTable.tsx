@@ -27,6 +27,7 @@ interface DraggableTableProps {
   onReorder: (fromIndex: number, toIndex: number, itemId: number) => void;
   hasMore: boolean;
   isLoading: boolean;
+  isFetchingNextPage: boolean;
 }
 
 
@@ -38,16 +39,39 @@ const DraggableTableComponent: React.FC<DraggableTableProps> = ({
   onLoadMore,
   onReorder,
   hasMore,
-  isLoading
+  isLoading,
+  isFetchingNextPage
 }) => {
   const [localItems, setLocalItems] = useState<Item[]>(items);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [loadingStartTime, setLoadingStartTime] = useState<number | null>(null);
 
   useEffect(() => {
     if (items.length !== localItems.length || localItems.length === 0) {
       setLocalItems(items);
     }
   }, [items, localItems.length]);
+
+  useEffect(() => {
+    if (isLoadingMore && !isFetchingNextPage && loadingStartTime) {
+      const elapsedTime = Date.now() - loadingStartTime;
+      const minLoadingTime = 500; // 0.5 секунды
+
+      if (elapsedTime >= minLoadingTime) {
+        setIsLoadingMore(false);
+        setLoadingStartTime(null);
+      } else {
+        const remainingTime = minLoadingTime - elapsedTime;
+        const timer = setTimeout(() => {
+          setIsLoadingMore(false);
+          setLoadingStartTime(null);
+        }, remainingTime);
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isFetchingNextPage, isLoadingMore, loadingStartTime]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -65,10 +89,11 @@ const DraggableTableComponent: React.FC<DraggableTableProps> = ({
     const target = e.target as HTMLDivElement;
     const { scrollTop, scrollHeight, clientHeight } = target;
     
-    if (scrollTop + clientHeight >= scrollHeight - 100 && hasMore && !isLoading && !isLoadingMore) {
+    // Загружаем когда пользователь доходит до 80% от конца списка
+    if (scrollTop + clientHeight >= scrollHeight * 0.8 && hasMore && !isLoading && !isLoadingMore) {
       setIsLoadingMore(true);
+      setLoadingStartTime(Date.now());
       onLoadMore();
-      setTimeout(() => setIsLoadingMore(false), 1000);
     }
   }, [hasMore, isLoading, isLoadingMore, onLoadMore]);
 
@@ -93,7 +118,7 @@ const DraggableTableComponent: React.FC<DraggableTableProps> = ({
   return (
     <div 
       style={{ 
-        height: 'calc(100vh - 200px)', 
+        height: '100%', 
         overflow: 'auto',
         overflowX: 'hidden',
         border: '1px solid #e0e0e0',
@@ -115,7 +140,11 @@ const DraggableTableComponent: React.FC<DraggableTableProps> = ({
            <DndContext
              sensors={sensors}
              collisionDetection={closestCenter}
-             onDragEnd={handleDragEnd}
+             onDragStart={() => setIsDragging(true)}
+             onDragEnd={(event) => {
+               setIsDragging(false);
+               handleDragEnd(event);
+             }}
            >
              <SortableContext
                items={localItems.map(item => item.id)}
@@ -127,6 +156,7 @@ const DraggableTableComponent: React.FC<DraggableTableProps> = ({
                      item={item}
                      isSelected={selectedItems.has(item.id)}
                      onSelectionChange={onSelectionChange}
+                     isGlobalDragging={isDragging}
                    />
                  ))}
              </SortableContext>

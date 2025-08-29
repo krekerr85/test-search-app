@@ -7,12 +7,14 @@ interface DraggableRowProps {
   item: Item;
   isSelected: boolean;
   onSelectionChange: (itemId: number, selected: boolean) => void;
+  isGlobalDragging: boolean;
 }
 
 const DraggableRowComponent: React.FC<DraggableRowProps> = ({ 
   item,
   isSelected,
-  onSelectionChange
+  onSelectionChange,
+  isGlobalDragging
 }) => {
   const {
     attributes,
@@ -48,7 +50,7 @@ const DraggableRowComponent: React.FC<DraggableRowProps> = ({
         justifyContent: 'flex-start',
         padding: '20px 16px',
         borderBottom: '2px solid #f0f0f0',
-        backgroundColor: isDragging ? '#f0f4ff' : (isHovered ? '#f0f4ff' : (isSelected ? '#f8f9ff' : 'white')),
+        backgroundColor: isDragging ? '#f0f4ff' : (isHovered && !isGlobalDragging ? '#f0f4ff' : (isSelected ? '#f8f9ff' : 'white')),
         userSelect: 'none',
         willChange: isDragging ? 'transform' : 'auto',
         backfaceVisibility: 'hidden',
@@ -64,8 +66,8 @@ const DraggableRowComponent: React.FC<DraggableRowProps> = ({
         boxSizing: 'border-box',
         ...dragStyle,
       }}
-             onMouseEnter={() => !isDragging && setIsHovered(true)}
-       onMouseLeave={() => !isDragging && setIsHovered(false)}
+             onMouseEnter={() => !isDragging && !isGlobalDragging && setIsHovered(true)}
+       onMouseLeave={() => !isDragging && !isGlobalDragging && setIsHovered(false)}
       {...attributes}
       {...listeners}
     >

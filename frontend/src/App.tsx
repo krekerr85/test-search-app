@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { DraggableTable } from './components/DraggableTable';
-import { LoadingSpinner } from './components/LoadingSpinner';
 import { Search } from './components/Search';
 import { useItems, useReorderItems, useUpdateSelection, useUserState } from './hooks/useItems';
 
@@ -76,7 +75,6 @@ const AppContent: React.FC = () => {
 
   const items = data?.pages.flatMap(page => page.items) || [];
   const hasMore = hasNextPage || false;
-  const isLoadingMore = isFetchingNextPage;
 
 
 
@@ -93,12 +91,18 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ 
+      height: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column',
+      overflow: 'hidden'
+    }}>
       <div style={{ 
         padding: '20px', 
         backgroundColor: '#fff',
         display: 'flex',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        flexShrink: 0
       }}>
         <div style={{ width: '65%' }}>
           <Search
@@ -112,9 +116,10 @@ const AppContent: React.FC = () => {
         flex: 1, 
         padding: '20px',
         display: 'flex',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        overflow: 'hidden'
       }}>
-        <div style={{ width: '65%' }}>
+        <div style={{ width: '65%', height: '100%' }}>
                      <DraggableTable
              items={items}
              selectedItems={selectedItems}
@@ -122,13 +127,9 @@ const AppContent: React.FC = () => {
              onLoadMore={handleLoadMore}
              onReorder={handleReorder}
              hasMore={hasMore}
-             isLoading={isLoading || isLoadingMore}
+             isLoading={isLoading}
+             isFetchingNextPage={isFetchingNextPage}
            />
-           {isLoadingMore && (
-             <div style={{ marginTop: '16px' }}>
-               <LoadingSpinner />
-             </div>
-           )}
         </div>
       </div>
     </div>

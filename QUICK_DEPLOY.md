@@ -34,9 +34,34 @@ docker-compose up -d --build
 
 4. **Проверка работы:**
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:3002/health
+- Backend API: http://localhost:3001/health
 
 ## 🌐 Деплой на сервер
+
+### Варианты доступа к фронтенду в продакшене:
+
+#### **Вариант A: Простой (порт 80)**
+```bash
+docker-compose up -d --build
+```
+- Фронтенд: `http://your-server-ip`
+- Backend API: `http://your-server-ip:3001/health`
+
+#### **Вариант B: Профессиональный (Nginx + SSL)**
+```bash
+# 1. Настройте домен и SSL сертификаты
+# 2. Отредактируйте nginx.prod.conf (замените yourdomain.com)
+# 3. Создайте папку ssl и поместите сертификаты
+mkdir ssl
+# cert.pem и key.pem в папку ssl/
+
+# 4. Запустите с продакшен конфигурацией
+docker-compose -f docker-compose.prod.yml up -d --build
+```
+- Фронтенд: `https://yourdomain.com`
+- Backend API: `https://yourdomain.com/api`
+- Автоматический редирект с HTTP на HTTPS
+- Rate limiting и security headers
 
 ### Вариант 1: Docker (Рекомендуется)
 
@@ -63,6 +88,9 @@ nano .env  # Отредактируйте для продакшена
 
 # Сборка и запуск
 docker-compose up -d --build
+
+# ИЛИ для продакшена с Nginx reverse proxy:
+# docker-compose -f docker-compose.prod.yml up -d --build
 ```
 
 ### Вариант 2: Git + PM2
